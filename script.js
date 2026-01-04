@@ -1,6 +1,5 @@
-// ▼▼▼ ここにあなたのアプリIDを貼り付けてください ▼▼▼
-// ⚠️引用符（'）を消さないように注意してください
-const APP_ID = 'YOUR_APP_ID'; 
+// ▼▼▼ 正しいアプリIDを入力済みです ▼▼▼
+const APP_ID = '1079362588947129175'; 
 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 const buttons = document.querySelectorAll('.mood-btn');
@@ -21,13 +20,13 @@ async function fetchRecipes(categoryId) {
     recipeList.innerHTML = '';          
     loading.classList.remove('hidden'); 
 
-    // APIのURL（ここは一文字も変えないでください）
+    // APIのURL
     const url = `https://app.rakuten.co.jp/services/api/Recipe/CategoryRanking/20170426?format=json&categoryId=${categoryId}&applicationId=${APP_ID}`;
 
     try {
         const response = await fetch(url);
         
-        // エラーチェック（ID間違いなどを検知）
+        // エラーチェック
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -38,7 +37,7 @@ async function fetchRecipes(categoryId) {
         displayRecipes(data.result);
 
     } catch (error) {
-        console.error('詳細なエラー:', error); // コンソールに詳しいエラーを出すように更新しました
+        console.error('詳細なエラー:', error);
         loading.classList.add('hidden');
         
         // ユーザー向けのエラー表示
@@ -46,9 +45,9 @@ async function fetchRecipes(categoryId) {
             <div style="text-align:center; color:#d32f2f;">
                 <p>⚠️ エラーが発生しました</p>
                 <p style="font-size:0.9rem;">
-                    1. 楽天Developersの「アプリURL」設定<br>
-                    2. コード内の「APP_ID」<br>
-                    のどちらかが間違っている可能性があります。
+                    GitHubへの反映に少し時間がかかっているか、<br>
+                    キャッシュが残っている可能性があります。<br>
+                    数分待ってからリロードしてみてください。
                 </p>
             </div>`;
     }

@@ -1,59 +1,71 @@
-// ▼▼▼ 正しいアプリIDを入力済みです ▼▼▼
+// ▼▼▼ アプリID設定済み ▼▼▼
 const APP_ID = '1079362588947129175'; 
 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+// ■ カテゴリグループ定義
+// 1つのボタンに対して複数のカテゴリIDを登録しておき、ここからランダムに検索します。
+// これにより「毎回違う提案」が可能になります。
+const categoryGroups = {
+    // 🇰🇷 トレンド: 韓国料理(17)、丼(14)、豚キムチ(11-73-345)
+    'trendy': ['17', '14', '11-73-345'],
+    
+    // ⏱️ 時短: レンジ調理(30-318)、5分以内(30-302)、缶詰(21)
+    'lazy': ['30-318', '30-302', '21'],
+    
+    // 💪 ヘルシー: オートミール(35-467)、鶏むね肉(11-70)、きのこ(12-114)
+    'healthy': ['35-467', '11-70', '12-114'],
+    
+    // 💸 節約: もやし(12-108)、豆腐(12-110)、卵料理(12-100)、厚揚げ(12-112)
+    'cheap': ['12-108', '12-110', '12-100', '12-112']
+};
 
 const buttons = document.querySelectorAll('.mood-btn');
 const recipeList = document.getElementById('recipe-list');
 const loading = document.getElementById('loading');
 
-// ボタンの設定
+// ボタン操作の設定
 buttons.forEach(button => {
     button.addEventListener('click', () => {
-        const categoryId = button.getAttribute('data-id');
-        fetchRecipes(categoryId);
+        // 1. 押されたボタンのグループ名を取得
+        const groupName = button.getAttribute('data-group');
+        
+        // 2. そのグループの中からランダムに1つのカテゴリIDを抽選
+        const ids = categoryGroups[groupName];
+        const randomId = ids[Math.floor(Math.random() * ids.length)];
+
+        // 3. 抽選されたIDで検索実行
+        fetchRecipes(randomId);
     });
 });
 
-// 楽天APIからデータを取得する関数
 async function fetchRecipes(categoryId) {
-    // 画面リセットとローディング表示
     recipeList.innerHTML = '';          
     loading.classList.remove('hidden'); 
 
-    // APIのURL
+    // APIリクエスト
     const url = `https://app.rakuten.co.jp/services/api/Recipe/CategoryRanking/20170426?format=json&categoryId=${categoryId}&applicationId=${APP_ID}`;
 
     try {
         const response = await fetch(url);
-        
-        // エラーチェック
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
 
         loading.classList.add('hidden');
-        displayRecipes(data.result);
+        
+        // ■ 工夫ポイント: シャッフル表示
+        // 取得した4つのレシピの並び順をランダムに入れ替えます。
+        // これにより、マンネリ化を防ぎ「常に新しい提案」に見せます。
+        const shuffledRecipes = shuffleArray(data.result);
+        
+        displayRecipes(shuffledRecipes);
 
     } catch (error) {
-        console.error('詳細なエラー:', error);
+        console.error('Error:', error);
         loading.classList.add('hidden');
-        
-        // ユーザー向けのエラー表示
-        recipeList.innerHTML = `
-            <div style="text-align:center; color:#d32f2f;">
-                <p>⚠️ エラーが発生しました</p>
-                <p style="font-size:0.9rem;">
-                    GitHubへの反映に少し時間がかかっているか、<br>
-                    キャッシュが残っている可能性があります。<br>
-                    数分待ってからリロードしてみてください。
-                </p>
-            </div>`;
+        recipeList.innerHTML = '<p style="text-align:center">読み込みに失敗しました。<br>もう一度押してみてください。</p>';
     }
 }
 
-// レシピ表示関数
 function displayRecipes(recipes) {
     const selectedRecipes = recipes.slice(0, 4);
 
@@ -68,16 +80,30 @@ function displayRecipes(recipes) {
         card.target = "_blank"; 
         card.className = 'recipe-card';
         
+        // 日付の整形 (例: 2024/01/01)
+        const dateStr = recipe.recipePublishDate ? recipe.recipePublishDate.split(' ')[0] : '';
+
         card.innerHTML = `
             <img src="${recipe.foodImageUrl}" alt="${recipe.recipeTitle}">
             <div class="card-content">
                 <h3 class="card-title">${recipe.recipeTitle}</h3>
                 <div class="cook-time">
-                    <span>🕒</span> 目安: ${recipe.recipeIndication}
+                    <span style="font-size:0.8rem; color:#888;">📅 ${dateStr}</span>
+                    <br>
+                    <span>⏱️</span> 目安: ${recipe.recipeIndication}
                 </div>
             </div>
         `;
-
         recipeList.appendChild(card);
     });
+}
+
+// 配列をランダムに混ぜる関数（フィッシャー・イェーツのシャッフル）
+function shuffleArray(array) {
+    const newArray = [...array]; // 元の配列を壊さないようにコピー
+    for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
 }

@@ -3,35 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ラクメシ - 大学生のためのレシピ提案</title>
+    <title>ラクショク - 大学生のためのレシピ提案</title>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🍽️ ラクメシ</h1>
-            <p>金欠・時間ない・腹減った。<br>今の気分を選ぶだけで提案します。</p>
+            <h1>🍽️ ラクショク</h1>
+            <p>今の気分を選ぶだけ。<br>あなたに代わって、最高のメニューを提案します。</p>
         </header>
 
         <section class="action-area">
-            <button class="mood-btn" data-id="36">🍱 週末の作り置き</button>
+            <button class="mood-btn" data-group="trendy">🇰🇷 韓国・ガッツリ</button>
 
-            <button class="mood-btn" data-id="33">🍖 がっつり・簡単</button>
+            <button class="mood-btn" data-group="lazy">⏱️ 秒でごはん（レンジ）</button>
             
-            <button class="mood-btn" data-id="30">⏱️ 秒でごはん</button>
+            <button class="mood-btn" data-group="healthy">💪 体づくり・ヘルシー</button>
 
-            <button class="mood-btn" data-id="11-70">💪 筋トレ（鶏むね）</button>
+            <button class="mood-btn" data-group="cheap">💸 限界・節約メシ</button>
         </section>
 
         <div id="loading" class="hidden">
             <div class="spinner"></div>
-            <p>美味しそうなやつを探してます...</p>
+            <p>おすすめのレシピをピックアップ中...</p>
         </div>
 
         <main id="recipe-list" class="recipe-grid">
             <div class="placeholder-msg">
-                ☝️ 上のボタンを押してみてね
+                ☝️ 今日の気分ボタンを押してください
             </div>
         </main>
     </div>

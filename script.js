@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
 
-// 1. 定数とデータ構造は元の「骨格」を維持
 const APP_ID = '1079362588947129175';
 
 const CATEGORY_GROUPS = {
@@ -12,22 +11,20 @@ const CATEGORY_GROUPS = {
 };
 
 function App() {
-    // 2. Reactの状態管理（State）を定義
+    //Reactの状態管理を定義
     const [recipes, setRecipes] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isCooldown, setIsCooldown] = useState(false); // 連打防止フラグ
     const [errorMsg, setErrorMsg] = useState('');
 
-    // 3. 元の fetchRecipes ロジックを React 用に調整
+    //元のfetchRecipesロジックをReact用に調整
     const fetchRecipes = async (groupName) => {
-        // 読み込み中やクールダウン中（連打）はリクエストを遮断
         if (loading || isCooldown) return;
 
         setLoading(true);
         setErrorMsg('');
         setRecipes([]);
 
-        // 元のロジック：ランダムにIDを選択
         const ids = CATEGORY_GROUPS[groupName];
         const randomId = ids[Math.floor(Math.random() * ids.length)];
         const url = `https://app.rakuten.co.jp/services/api/Recipe/CategoryRanking/20170426?format=json&categoryId=${randomId}&applicationId=${APP_ID}`;
@@ -35,9 +32,8 @@ function App() {
         try {
             const response = await fetch(url);
             
-            // 教授の指摘対策：API制限（429 Too Many Requests）時の遊び心ある対応
             if (response.status === 429) {
-                setErrorMsg('ちょっと焦りすぎよ！落ち着いて選んでね🍵');
+                setErrorMsg('ちょっと焦りすぎよ！落ち着いて選んでね♡');
                 setLoading(false);
                 return;
             }
@@ -46,22 +42,19 @@ function App() {
 
             const data = await response.json();
 
-            // 元のロジック：シャッフルして4件表示
             const shuffled = shuffleArray(data.result);
             setRecipes(shuffled.slice(0, 4));
 
-            // 【超重要】表示後に2秒間のクールダウンを設定してAPIを保護
             setIsCooldown(true);
             setTimeout(() => setIsCooldown(false), 2000);
 
         } catch (error) {
-            setErrorMsg('読み込みに失敗しました。しばらく時間をおいて試してください。');
+            setErrorMsg('読み込みに失敗したため、しばらく時間をおいて試してください。');
         } finally {
             setLoading(false);
         }
     };
 
-    // 4. 元の shuffleArray ユーティリティ関数
     function shuffleArray(array) {
         const newArray = [...array];
         for (let i = newArray.length - 1; i > 0; i--) {
@@ -74,7 +67,7 @@ function App() {
     return (
         <div className="container">
             <header>
-                <h1>🍽️ ラクショク</h1>
+                <h1>🍽️ ラクショク 🍚</h1>
                 <p className="subtitle">”楽に”　”楽しく”　”食す”</p>
             </header>
 

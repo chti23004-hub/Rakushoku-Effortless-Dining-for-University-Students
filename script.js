@@ -1,80 +1,117 @@
+import React, { useState } from 'react';
+import './App.css';
+
+// 1. 定数とデータ構造は元の「骨格」を維持
 const APP_ID = '1079362588947129175';
 
-const categoryGroups = {
+const CATEGORY_GROUPS = {
     'trendy': ['17', '14', '11-73-345'],
     'lazy': ['30-318', '30-302', '21'],
     'healthy': ['35-467', '11-70', '12-114'],
     'cheap': ['12-108', '12-110', '12-100']
 };
 
-const buttons = document.querySelectorAll('.mood-btn');
-const recipeList = document.getElementById('recipe-list');
-const loading = document.getElementById('loading');
+function App() {
+    // 2. Reactの状態管理（State）を定義
+    const [recipes, setRecipes] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [isCooldown, setIsCooldown] = useState(false); // 連打防止フラグ
+    const [errorMsg, setErrorMsg] = useState('');
 
-buttons.forEach(button => {
-    button.addEventListener('click', () => {
-        const groupName = button.getAttribute('data-group');
-        const ids = categoryGroups[groupName];
+    // 3. 元の fetchRecipes ロジックを React 用に調整
+    const fetchRecipes = async (groupName) => {
+        // 読み込み中やクールダウン中（連打）はリクエストを遮断
+        if (loading || isCooldown) return;
+
+        setLoading(true);
+        setErrorMsg('');
+        setRecipes([]);
+
+        // 元のロジック：ランダムにIDを選択
+        const ids = CATEGORY_GROUPS[groupName];
         const randomId = ids[Math.floor(Math.random() * ids.length)];
-        fetchRecipes(randomId);
-    });
-});
+        const url = `https://app.rakuten.co.jp/services/api/Recipe/CategoryRanking/20170426?format=json&categoryId=${randomId}&applicationId=${APP_ID}`;
 
-async function fetchRecipes(categoryId) {
-    recipeList.innerHTML = '';
-    loading.classList.remove('hidden');
+        try {
+            const response = await fetch(url);
+            
+            // 教授の指摘対策：API制限（429 Too Many Requests）時の遊び心ある対応
+            if (response.status === 429) {
+                setErrorMsg('ちょっと焦りすぎよ！落ち着いて選んでね🍵');
+                setLoading(false);
+                return;
+            }
 
-    const url = `https://app.rakuten.co.jp/services/api/Recipe/CategoryRanking/20170426?format=json&categoryId=${categoryId}&applicationId=${APP_ID}`;
+            if (!response.ok) throw new Error('通信エラー');
 
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
+            const data = await response.json();
 
-        loading.classList.add('hidden');
-        displayRecipes(shuffleArray(data.result));
+            // 元のロジック：シャッフルして4件表示
+            const shuffled = shuffleArray(data.result);
+            setRecipes(shuffled.slice(0, 4));
 
-    } catch (error) {
-        loading.classList.add('hidden');
-        recipeList.innerHTML = '<p style="text-align:center">読み込みに失敗しました。</p>';
+            // 【超重要】表示後に2秒間のクールダウンを設定してAPIを保護
+            setIsCooldown(true);
+            setTimeout(() => setIsCooldown(false), 2000);
+
+        } catch (error) {
+            setErrorMsg('読み込みに失敗しました。しばらく時間をおいて試してください。');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 4. 元の shuffleArray ユーティリティ関数
+    function shuffleArray(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
     }
-}
 
-function displayRecipes(recipes) {
-    const selectedRecipes = recipes.slice(0, 4);
+    return (
+        <div className="container">
+            <header>
+                <h1>🍽️ ラクショク</h1>
+                <p className="subtitle">”楽に”　”楽しく”　”食す”</p>
+            </header>
 
-    if (selectedRecipes.length === 0) {
-        recipeList.innerHTML = '<p>レシピが見つかりませんでした。</p>';
-        return;
-    }
+            {/* ボタンエリア：disabled属性で連打を物理的に防ぐ */}
+            <section className="action-area">
+                <button className="mood-btn" onClick={() => fetchRecipes('trendy')} disabled={loading || isCooldown}>🍖 流行りをガッツリ</button>
+                <button className="mood-btn" onClick={() => fetchRecipes('lazy')} disabled={loading || isCooldown}>⏱️ 秒でごはん</button>
+                <button className="mood-btn" onClick={() => fetchRecipes('healthy')} disabled={loading || isCooldown}>💪 体づくり</button>
+                <button className="mood-btn" onClick={() => fetchRecipes('cheap')} disabled={loading || isCooldown}>💸 限界・節約メシ</button>
+            </section>
 
-    selectedRecipes.forEach(recipe => {
-        const card = document.createElement('a');
-        card.href = recipe.recipeUrl;
-        card.target = "_blank";
-        card.className = 'recipe-card';
-        
-        const dateStr = recipe.recipePublishDate ? recipe.recipePublishDate.split(' ')[0] : '';
-
-        card.innerHTML = `
-            <img src="${recipe.foodImageUrl}" alt="${recipe.recipeTitle}">
-            <div class="card-content">
-                <h3 class="card-title">${recipe.recipeTitle}</h3>
-                <div class="cook-time">
-                    <span style="font-size:0.8rem; color:#888;">📅 ${dateStr}</span><br>
-                    <span>⏱️</span> 目安: ${recipe.recipeIndication}
-                </div>
+            <div className="status-area">
+                {loading && <div className="spinner">おすすめをピックアップ中...</div>}
+                {errorMsg && <p className="error-text">{errorMsg}</p>}
+                {!loading && isCooldown && <p className="cooldown-text">じっくり見てね！次の提案まであと少し...</p>}
             </div>
-        `;
-        recipeList.appendChild(card);
-    });
+
+            <main className="recipe-grid">
+                {recipes.length === 0 && !loading && !errorMsg && (
+                    <p className="placeholder">☝️ 今日の気分ボタンを押してください</p>
+                )}
+                
+                {recipes.map((recipe, index) => (
+                    <a key={index} href={recipe.recipeUrl} target="_blank" rel="noopener noreferrer" className="recipe-card">
+                        <img src={recipe.foodImageUrl} alt={recipe.recipeTitle} />
+                        <div className="card-content">
+                            <h3 className="card-title">{recipe.recipeTitle}</h3>
+                            <div className="cook-time">
+                                <span className="date">📅 {recipe.recipePublishDate?.split(' ')[0]}</span><br />
+                                <span>⏱️</span> 目安: {recipe.recipeIndication}
+                            </div>
+                        </div>
+                    </a>
+                ))}
+            </main>
+        </div>
+    );
 }
 
-function shuffleArray(array) {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
-}
+export default App;

@@ -1,3 +1,25 @@
+:root {
+  width: 100%;
+}
+
+body {
+  margin: 0;
+  display: block; /*中央に寄っている初期設定を解除*/
+  place-items: unset; 
+  min-width: 320px;
+  min-height: 100vh;
+  width: 100%;
+}
+
+#root {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0;
+  text-align: center;
+  width: 100%;
+  display: block;
+}
+
 .container {
   max-width: 600px;
   margin: 0 auto;
